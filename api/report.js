@@ -1,0 +1,5 @@
+import {db} from 'hatchable';
+export const access='user';
+export const methods=['POST'];
+const tables={outfit:'outfits',design:'custom_designs',tryon:'virtual_tryons',fabric:'fabric_uploads',redesign:'redesign_projects'};
+export default async function(req,res){const uid=req.user.id;const type=String(req.body?.target_type||'');const id=String(req.body?.target_id||'');const reason=String(req.body?.reason||'').trim();const table=tables[type];if(!table||!id||reason.length<5||reason.length>500)return res.status(400).json({error:'Choose a valid saved item and provide a reason of 5–500 characters.'});const item=await db.query('SELECT id FROM '+table+' WHERE id=$1 AND user_id=$2',[id,uid]);if(!item.rows.length)return res.status(404).json({error:'Saved item not found.'});const {rows}=await db.query('INSERT INTO reports(user_id,target_type,target_id,reason) VALUES($1,$2,$3,$4) RETURNING id,status,created_at',[uid,type,id,reason]);return res.status(201).json({report:rows[0]});}

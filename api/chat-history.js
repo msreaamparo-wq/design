@@ -1,0 +1,4 @@
+import {db} from 'hatchable';
+export const access='user';
+export const methods=['GET','DELETE'];
+export default async function(req,res){const uid=req.user.id;if(req.method==='DELETE'){const id=String(req.body?.id||'');const q=await db.query('DELETE FROM ai_conversations WHERE id=$1 AND user_id=$2',[id,uid]);return res.json({ok:true});}const id=String(req.query?.id||'');if(id){const c=await db.query('SELECT id,title,created_at FROM ai_conversations WHERE id=$1 AND user_id=$2',[id,uid]);if(!c.rows.length)return res.status(404).json({error:'Conversation not found.'});const m=await db.query('SELECT id,role,content,created_at FROM ai_messages WHERE conversation_id=$1 AND user_id=$2 ORDER BY created_at ASC',[id,uid]);return res.json({conversation:c.rows[0],messages:m.rows});}const {rows}=await db.query('SELECT id,title,created_at FROM ai_conversations WHERE user_id=$1 ORDER BY created_at DESC LIMIT 40',[uid]);return res.json({conversations:rows});}
