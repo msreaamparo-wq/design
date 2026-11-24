@@ -1,144 +1,187 @@
 import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js';
 
-const host=document.querySelector('#dressform');
-if(host){
-  let renderer,observer,frame;
-  try{
-    const scene=new THREE.Scene();
-    const camera=new THREE.PerspectiveCamera(31,1,.1,100);
-    camera.position.set(4.8,2.1,8.5);
-    camera.lookAt(0,.35,0);
-    renderer=new THREE.WebGLRenderer({alpha:true,antialias:true,powerPreference:'high-performance'});
-    renderer.setPixelRatio(Math.min(devicePixelRatio||1,1.6));
-    renderer.outputColorSpace=THREE.SRGBColorSpace;
-    renderer.toneMapping=THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure=1.12;
-    renderer.shadowMap.enabled=true;
-    renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+const host = document.querySelector('#dressform');
+if (host) {
+  let renderer, observer, frame;
+  try {
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color('#0b0b0d');
+    scene.fog = new THREE.Fog('#0b0b0d', 8, 19);
+    const camera = new THREE.PerspectiveCamera(32, 1, .1, 60);
+    camera.position.set(4.4, 1.15, 8.8);
+    camera.lookAt(0, -.05, 0);
+
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.7));
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
     host.replaceChildren(renderer.domElement);
-    renderer.domElement.setAttribute('aria-label','Interactive three-dimensional couture mannequin. Drag to rotate.');
-    renderer.domElement.style.touchAction='pan-y';
-    scene.add(new THREE.HemisphereLight(0xfff5ed,0x483541,2.05));
-    const key=new THREE.DirectionalLight(0xffe7d9,3.2);key.position.set(3,6,5);key.castShadow=true;scene.add(key);
-    const rim=new THREE.DirectionalLight(0xd79aaa,2.8);rim.position.set(-4,3,-4);scene.add(rim);
-    const fill=new THREE.PointLight(0xf3cdb7,1.15,11);fill.position.set(2,0,4);scene.add(fill);
+    renderer.domElement.setAttribute('aria-label', 'Interactive three-dimensional couture mannequin in a silver draped garment. Drag to rotate and scroll to zoom.');
+    renderer.domElement.style.touchAction = 'pan-y';
 
-    const turntable=new THREE.Group();scene.add(turntable);
-    const mannequin=new THREE.Group();turntable.add(mannequin);
-    const linen=new THREE.MeshPhysicalMaterial({color:0xd8c3b2,roughness:.52,metalness:.01,clearcoat:.16});
-    const seamMat=new THREE.MeshStandardMaterial({color:0xb59b8d,roughness:.8});
-    const brass=new THREE.MeshStandardMaterial({color:0xc39a69,metalness:.72,roughness:.25});
-    const dark=new THREE.MeshStandardMaterial({color:0x493641,roughness:.5,metalness:.24});
+    scene.add(new THREE.HemisphereLight(0xcfd2d8, 0x17171b, 1.45));
+    // Studio lighting is built from directional, point and spot lights.
+    const keyLight = new THREE.DirectionalLight(0xf4f1ed, 3.3);
+    keyLight.position.set(3.5, 6, 5); keyLight.castShadow = true; keyLight.shadow.mapSize.set(1024, 1024);
+    keyLight.shadow.camera.left = -4; keyLight.shadow.camera.right = 4; keyLight.shadow.camera.top = 5; keyLight.shadow.camera.bottom = -5;
+    scene.add(keyLight);
+    const rim = new THREE.DirectionalLight(0xb7c0cf, 3.8); rim.position.set(-4, 3, -4); scene.add(rim);
+    const soft = new THREE.PointLight(0xffffff, 1.1, 12); soft.position.set(2, 1, 5); scene.add(soft);
+    const top = new THREE.SpotLight(0xffffff, 90, 16, Math.PI / 5, .65, 1.4); top.position.set(0, 6, 1); top.castShadow = true; scene.add(top);
 
-    // Tailored torso profile: shoulders, bust, waist and hips are shaped as a continuous form.
-    const rings=[
-      [-1.28,.43,.29,0],[-1.20,.53,.34,0],[-1.02,.59,.37,0],
-      [-.78,.55,.34,0],[-.54,.46,.29,0],[-.28,.39,.255,0],
-      [-.02,.37,.25,0],[.20,.405,.275,0],[.40,.48,.31,0],
-      [.58,.54,.33,0],[.73,.49,.30,0],[.86,.37,.24,0],
-      [.96,.23,.19,0],[1.04,.15,.15,0],[1.22,.14,.14,0],
-      [1.30,.17,.16,0]
+    const stage = new THREE.Group(); scene.add(stage);
+    const mannequin = new THREE.Group(); stage.add(mannequin);
+    const bodyMat = new THREE.MeshPhysicalMaterial({ color: 0x24252a, roughness: .34, metalness: .22, clearcoat: .42, clearcoatRoughness: .24 });
+    const darkMetal = new THREE.MeshStandardMaterial({ color: 0x55585f, metalness: .82, roughness: .26 });
+    const satin = new THREE.MeshPhysicalMaterial({ color: 0xb9bbc0, roughness: .24, metalness: .22, clearcoat: .72, clearcoatRoughness: .2, sheen: 1, sheenColor: new THREE.Color(0xe4e5e8), side: THREE.DoubleSide });
+    const satinShadow = new THREE.MeshPhysicalMaterial({ color: 0x74777f, roughness: .3, metalness: .16, sheen: .8, side: THREE.DoubleSide });
+
+    function ringSurface(profile, material, segments = 112, radialDetail = 1) {
+      const pos = [], uv = [], idx = [];
+      for (let j = 0; j < profile.length; j++) {
+        const [y, rx, rz, zc = 0] = profile[j];
+        for (let i = 0; i <= segments; i++) {
+          const a = i / segments * Math.PI * 2;
+          pos.push(Math.cos(a) * rx, y, Math.sin(a) * rz + zc);
+          uv.push(i / segments, j / (profile.length - 1));
+        }
+      }
+      for (let j = 0; j < profile.length - 1; j++) for (let i = 0; i < segments; i++) {
+        const a = j * (segments + 1) + i, b = a + 1, c = a + segments + 2, d = a + segments + 1;
+        idx.push(a, d, b, b, d, c);
+      }
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+      g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2));
+      g.setIndex(idx); g.computeVertexNormals();
+      const mesh = new THREE.Mesh(g, material); mesh.castShadow = true; mesh.receiveShadow = true;
+      return mesh;
+    }
+
+    // Continuous dress-form silhouette: hips, waist, bust, shoulders and neck.
+    const torsoProfile = [
+      [-1.34,.43,.30],[-1.25,.51,.34],[-1.08,.56,.36],[-.88,.54,.35],
+      [-.67,.47,.31],[-.43,.40,.275],[-.18,.365,.255],[.06,.37,.26],
+      [.27,.405,.285],[.47,.48,.32],[.64,.55,.34],[.77,.51,.32],
+      [.87,.39,.265],[.96,.245,.19],[1.08,.16,.15],[1.25,.15,.145]
     ];
-    const vertices=[],indices=[],segments=96;
-    for(const [y,rx,rz,cz] of rings){
-      for(let i=0;i<segments;i++){
-        const a=i/segments*Math.PI*2;
-        vertices.push(Math.cos(a)*rx,y,Math.sin(a)*rz+cz);
+    mannequin.add(ringSurface(torsoProfile, bodyMat, 128));
+    const neck = new THREE.Mesh(new THREE.CylinderGeometry(.13, .16, .32, 48), bodyMat);
+    neck.position.y = 1.36; neck.castShadow = true; mannequin.add(neck);
+    const neckRing = new THREE.Mesh(new THREE.TorusGeometry(.15,.018,12,64), darkMetal);
+    neckRing.rotation.x = Math.PI / 2; neckRing.position.y = 1.51; mannequin.add(neckRing);
+    const cap = new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,.045,48), darkMetal); cap.position.y = 1.56; mannequin.add(cap);
+    const finial = new THREE.Mesh(new THREE.SphereGeometry(.075,32,24), darkMetal); finial.position.y = 1.63; mannequin.add(finial);
+
+    // Smooth, tapered shoulder and arm forms rather than primitive stacked pieces.
+    for (const side of [-1,1]) {
+      const armCurve = new THREE.CatmullRomCurve3([
+        new THREE.Vector3(side*.48,.73,0), new THREE.Vector3(side*.66,.58,.005),
+        new THREE.Vector3(side*.75,.30,.015), new THREE.Vector3(side*.78,-.02,.025),
+        new THREE.Vector3(side*.76,-.23,.025)
+      ]);
+      const arm = new THREE.Mesh(new THREE.TubeGeometry(armCurve, 48, .072, 18, false), bodyMat);
+      arm.castShadow = true; mannequin.add(arm);
+      const shoulder = new THREE.Mesh(new THREE.SphereGeometry(.16,32,24), bodyMat);
+      shoulder.scale.set(1.25,.8,1); shoulder.position.set(side*.49,.70,0); mannequin.add(shoulder);
+    }
+
+    // Silver silk skirt: a continuous draped surface with pleats, gathered waist and soft folds.
+    const skirtPos = [], skirtUv = [], skirtIdx = [];
+    const rows = 72, cols = 144;
+    for (let j=0; j<=rows; j++) {
+      const v = j / rows;
+      for (let i=0; i<=cols; i++) {
+        const u = i / cols, a = u * Math.PI * 2;
+        const pleat = Math.cos(a*18 + v*1.7) * (.012 + v*.035);
+        const fold = Math.sin(a*9 - v*4.5) * .018 * v;
+        const radiusX = .40 + v*.32 + pleat + fold;
+        const radiusZ = .285 + v*.25 + pleat*.72 + fold*.6;
+        const y = .05 - v*1.56 + Math.sin(a*18 + v*1.7)*.014*v;
+        const drape = .035*Math.sin(a*3 + v*3.2)*v;
+        skirtPos.push(Math.cos(a)*radiusX, y, Math.sin(a)*radiusZ + drape);
+        skirtUv.push(u, v);
       }
     }
-    for(let j=0;j<rings.length-1;j++)for(let i=0;i<segments;i++){
-      const a=j*segments+i,b=j*segments+(i+1)%segments,c=(j+1)*segments+(i+1)%segments,d=(j+1)*segments+i;
-      indices.push(a,b,d,b,c,d);
+    for(let j=0;j<rows;j++) for(let i=0;i<cols;i++) {
+      const a=j*(cols+1)+i,b=a+1,c=a+cols+2,d=a+cols+1;
+      skirtIdx.push(a,d,b,b,d,c);
     }
-    const torsoGeo=new THREE.BufferGeometry();
-    torsoGeo.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));
-    torsoGeo.setIndex(indices);torsoGeo.computeVertexNormals();
-    const torso=new THREE.Mesh(torsoGeo,linen);torso.castShadow=true;torso.receiveShadow=true;mannequin.add(torso);
+    const skirtGeo = new THREE.BufferGeometry();
+    skirtGeo.setAttribute('position',new THREE.Float32BufferAttribute(skirtPos,3));
+    skirtGeo.setAttribute('uv',new THREE.Float32BufferAttribute(skirtUv,2));
+    skirtGeo.setIndex(skirtIdx); skirtGeo.computeVertexNormals();
+    const skirt = new THREE.Mesh(skirtGeo,satin); skirt.castShadow=true; skirt.receiveShadow=true; mannequin.add(skirt);
 
-    // Bust shaping gives the dress form a recognisable couture silhouette.
-    for(const side of [-1,1]){
-      const bust=new THREE.Mesh(new THREE.SphereGeometry(1,40,32),linen);
-      bust.scale.set(.225,.235,.16);bust.position.set(side*.235,.35,.235);bust.castShadow=true;mannequin.add(bust);
-    }
-    const neck=new THREE.Mesh(new THREE.CylinderGeometry(.115,.145,.28,48),linen);
-    neck.position.y=1.40;mannequin.add(neck);
-    const neckCap=new THREE.Mesh(new THREE.CylinderGeometry(.13,.13,.035,48),brass);
-    neckCap.position.y=1.555;mannequin.add(neckCap);
-    const finial=new THREE.Mesh(new THREE.SphereGeometry(.085,32,24),brass);
-    finial.position.y=1.64;mannequin.add(finial);
-
-    // Slim shoulder arms with rounded caps, angled slightly away from the body.
-    for(const side of [-1,1]){
-      const arm=new THREE.Mesh(new THREE.CapsuleGeometry(.075,.62,8,20),linen);
-      arm.position.set(side*.64,.47,0);arm.rotation.z=side*-.16;arm.castShadow=true;mannequin.add(arm);
-      const cap=new THREE.Mesh(new THREE.SphereGeometry(.09,24,16),linen);
-      cap.position.set(side*.69,.07,0);mannequin.add(cap);
-      const shoulder=new THREE.Mesh(new THREE.SphereGeometry(.12,24,16),linen);
-      shoulder.scale.set(1,.72,.9);shoulder.position.set(side*.52,.77,0);mannequin.add(shoulder);
-    }
-
-    // Subtle vertical tailoring seams.
-    for(const side of [-1,1]){
-      const seam=new THREE.Mesh(new THREE.CatmullRomCurve3([
-        new THREE.Vector3(side*.02,-1.15,.34),new THREE.Vector3(side*.17,-.55,.29),
-        new THREE.Vector3(side*.14,-.05,.255),new THREE.Vector3(side*.23,.37,.34),
-        new THREE.Vector3(side*.35,.63,.30)
-      ]).getPoints(48).length>0?new THREE.TubeGeometry(new THREE.CatmullRomCurve3([
-        new THREE.Vector3(side*.02,-1.15,.34),new THREE.Vector3(side*.17,-.55,.29),
-        new THREE.Vector3(side*.14,-.05,.255),new THREE.Vector3(side*.23,.37,.34),
-        new THREE.Vector3(side*.35,.63,.30)
-      ]),48,.006,8,false):new THREE.BufferGeometry(),seamMat);
-      mannequin.add(seam);
-    }
-
-    // A soft couture drape panel adds visible fabric movement and depth.
-    const drape=new THREE.Group();mannequin.add(drape);
-    const clothMat=new THREE.MeshPhysicalMaterial({color:0x855c6b,roughness:.7,side:THREE.DoubleSide,metalness:.01});
-    const clothPos=[],clothIdx=[],cols=48,rows=32;
-    for(let y=0;y<=rows;y++){
-      const v=y/rows;
-      for(let x=0;x<=cols;x++){
-        const u=x/cols,angle=(u-.5)*Math.PI*1.2;
-        const radius=.43+v*.27+.025*Math.sin(u*Math.PI*8+v*5);
-        clothPos.push(Math.sin(angle)*radius,-.12-v*1.28,Math.cos(angle)*radius*.72+.035*Math.sin(u*18+v*5));
+    // Diagonal silk wrap over the bodice with fine natural folds.
+    const wrapPos=[], wrapUv=[], wrapIdx=[];
+    const wr=52,wc=88;
+    for(let j=0;j<=wr;j++){
+      const v=j/wr;
+      for(let i=0;i<=wc;i++){
+        const u=i/wc, y=.78-v*.94;
+        const a=(u-.5)*2.05 + (v-.5)*.24;
+        const rx=.50 + v*.045;
+        const rz=.326 + v*.025;
+        const fold=Math.sin(u*Math.PI*13 + v*2.8)*.012 + Math.sin(u*Math.PI*25-v*3)*.004;
+        const diagonal=(u-.5)*.23;
+        wrapPos.push(Math.sin(a)*(rx+fold), y+diagonal, Math.cos(a)*(rz+fold));
+        wrapUv.push(u,v);
       }
     }
-    for(let y=0;y<rows;y++)for(let x=0;x<cols;x++){
-      const a=y*(cols+1)+x,b=a+1,c=a+cols+2,d=a+cols+1;
-      clothIdx.push(a,d,b,b,d,c);
+    for(let j=0;j<wr;j++)for(let i=0;i<wc;i++){
+      const a=j*(wc+1)+i,b=a+1,c=a+wc+2,d=a+wc+1;
+      wrapIdx.push(a,d,b,b,d,c);
     }
-    const clothGeo=new THREE.BufferGeometry();
-    clothGeo.setAttribute('position',new THREE.Float32BufferAttribute(clothPos,3));
-    clothGeo.setIndex(clothIdx);clothGeo.computeVertexNormals();
-    const skirt=new THREE.Mesh(clothGeo,clothMat);skirt.castShadow=true;skirt.receiveShadow=true;drape.add(skirt);
-    const waistBand=new THREE.Mesh(new THREE.TorusGeometry(.405,.018,12,96),brass);
-    waistBand.position.y=-.12;waistBand.rotation.x=Math.PI/2;drape.add(waistBand);
+    const wrapGeo=new THREE.BufferGeometry();
+    wrapGeo.setAttribute('position',new THREE.Float32BufferAttribute(wrapPos,3));
+    wrapGeo.setAttribute('uv',new THREE.Float32BufferAttribute(wrapUv,2));
+    wrapGeo.setIndex(wrapIdx);wrapGeo.computeVertexNormals();
+    const wrap=new THREE.Mesh(wrapGeo,satin);wrap.castShadow=true;wrap.receiveShadow=true;mannequin.add(wrap);
 
-    const pole=new THREE.Mesh(new THREE.CylinderGeometry(.025,.032,1.0,24),brass);
-    pole.position.y=-1.78;mannequin.add(pole);
-    const collar=new THREE.Mesh(new THREE.CylinderGeometry(.2,.24,.11,48),dark);
-    collar.position.y=-1.30;mannequin.add(collar);
-    const base=new THREE.Mesh(new THREE.CylinderGeometry(.58,.68,.12,64),dark);
-    base.position.y=-2.31;base.castShadow=true;mannequin.add(base);
-    const baseLine=new THREE.Mesh(new THREE.TorusGeometry(.63,.012,10,96),brass);
-    baseLine.rotation.x=Math.PI/2;baseLine.position.y=-2.245;mannequin.add(baseLine);
+    // Fine tailoring details and polished pedestal.
+    const waist = new THREE.Mesh(new THREE.TorusGeometry(.405,.014,10,100),darkMetal);
+    waist.rotation.x=Math.PI/2;waist.position.y=.035;mannequin.add(waist);
+    const pole = new THREE.Mesh(new THREE.CylinderGeometry(.025,.035,1.05,32),darkMetal); pole.position.y=-1.82;mannequin.add(pole);
+    const collar = new THREE.Mesh(new THREE.CylinderGeometry(.18,.22,.12,64),darkMetal);collar.position.y=-1.34;mannequin.add(collar);
+    const base = new THREE.Mesh(new THREE.CylinderGeometry(.58,.68,.14,80),new THREE.MeshStandardMaterial({color:0x17181c,metalness:.78,roughness:.28}));
+    base.position.y=-2.43;base.castShadow=true;mannequin.add(base);
+    const rimLine=new THREE.Mesh(new THREE.TorusGeometry(.63,.012,12,96),darkMetal);rimLine.rotation.x=Math.PI/2;rimLine.position.y=-2.35;mannequin.add(rimLine);
 
-    const floor=new THREE.Mesh(new THREE.CircleGeometry(2.4,64),new THREE.MeshBasicMaterial({color:0x9a6d79,transparent:true,opacity:.075}));
-    floor.rotation.x=-Math.PI/2;floor.position.y=-2.39;scene.add(floor);
+    // Dark seamless studio, subtle reflective floor and restrained halo.
+    const floor = new THREE.Mesh(new THREE.CircleGeometry(7,96),new THREE.MeshStandardMaterial({color:0x111216,roughness:.34,metalness:.22}));
+    floor.rotation.x=-Math.PI/2;floor.position.y=-2.52;floor.receiveShadow=true;scene.add(floor);
+    const halo = new THREE.Mesh(new THREE.TorusGeometry(2.25,.006,8,160),new THREE.MeshBasicMaterial({color:0x555a63,transparent:true,opacity:.5}));
+    halo.position.set(0,-.2,-1.5);scene.add(halo);
 
-    const resize=()=>{const w=Math.max(host.clientWidth,1),h=Math.max(host.clientHeight,1);renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();};
+    const resize=()=>{
+      const w=Math.max(host.clientWidth,1),h=Math.max(host.clientHeight,1);
+      renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();
+    };
     observer=new ResizeObserver(resize);observer.observe(host);resize();
-    let dragging=false,lastX=0,velocity=0,target=0;
+    let dragging=false,lastX=0,target=0,zoom=8.8;
     host.addEventListener('pointerdown',e=>{dragging=true;lastX=e.clientX;host.setPointerCapture?.(e.pointerId);});
-    host.addEventListener('pointermove',e=>{if(!dragging)return;const dx=e.clientX-lastX;target+=dx*.009;velocity=dx*.0008;lastX=e.clientX;});
-    const stop=()=>{dragging=false;};
-    host.addEventListener('pointerup',stop);host.addEventListener('pointercancel',stop);host.addEventListener('lostpointercapture',stop);
-    const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
+    host.addEventListener('pointermove',e=>{if(!dragging)return;target+=(e.clientX-lastX)*.009;lastX=e.clientX;});
+    const stop=()=>{dragging=false;};host.addEventListener('pointerup',stop);host.addEventListener('pointercancel',stop);host.addEventListener('lostpointercapture',stop);
+    host.addEventListener('wheel',e=>{e.preventDefault();zoom=THREE.MathUtils.clamp(zoom+e.deltaY*.006,6.5,11.5);},{passive:false});
+    const reduced=window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const clock=new THREE.Clock();
-    const animate=()=>{frame=requestAnimationFrame(animate);const t=clock.getElapsedTime();if(!reduced){if(!dragging){target+=.002;target+=velocity;velocity*=.94;}turntable.rotation.y+=(target-turntable.rotation.y)*.075;drape.rotation.y=Math.sin(t*.65)*.018;skirt.position.z=Math.sin(t*.8)*.012;}renderer.render(scene,camera);};
+    const animate=()=>{
+      frame=requestAnimationFrame(animate);
+      const t=clock.getElapsedTime();
+      if(!reduced&&!dragging)target+=.0012;
+      stage.rotation.y+=(target-stage.rotation.y)*.055;
+      camera.position.z+=(zoom-camera.position.z)*.08;
+      if(!reduced){skirt.rotation.y=Math.sin(t*.55)*.008;wrap.rotation.y=Math.sin(t*.42)*.006;}
+      renderer.render(scene,camera);
+    };
     animate();
-    window.addEventListener('pagehide',()=>{cancelAnimationFrame(frame);observer?.disconnect();renderer?.dispose();}, {once:true});
-  }catch(error){
-    host.innerHTML='<div class="three-fallback">THREADS / ATELIER<br><span>FORM STUDY 01</span></div>';
+    window.addEventListener('pagehide',()=>{cancelAnimationFrame(frame);observer?.disconnect();renderer?.dispose();},{once:true});
+  } catch(error) {
+    host.innerHTML='<div class="three-fallback"><span>THREADS / ATELIER</span><b>FORM STUDY 01</b><small>3D studio unavailable in this browser</small></div>';
+    console.error('THREADS 3D studio failed:',error);
   }
 }
