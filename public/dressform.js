@@ -157,6 +157,34 @@ if (host) {
     const halo = new THREE.Mesh(new THREE.TorusGeometry(2.25,.006,8,160),new THREE.MeshBasicMaterial({color:0x555a63,transparent:true,opacity:.5}));
     halo.position.set(0,-.2,-1.5);scene.add(halo);
 
+    // Architectural couture-gallery frame: layered metal arches and light columns.
+    const frameMetal = new THREE.MeshBasicMaterial({color:0x777b84,visible:false});
+    const frameDark = new THREE.MeshBasicMaterial({color:0x24262c,visible:false});
+    const outerArch = new THREE.Mesh(new THREE.TorusGeometry(2.72,.018,12,180),frameMetal);
+    outerArch.position.set(0,-.18,-2.05); scene.add(outerArch);
+    const innerArch = new THREE.Mesh(new THREE.TorusGeometry(2.48,.008,8,180),new THREE.MeshBasicMaterial({color:0xaeb2bb,visible:false}));
+    innerArch.position.set(0,-.18,-1.98); scene.add(innerArch);
+    for(const side of [-1,1]){
+      const column = new THREE.Mesh(new THREE.BoxGeometry(.035,4.9,.045),frameDark);
+      column.position.set(side*2.68,-.05,-1.82);scene.add(column);
+      const lightBar = new THREE.Mesh(new THREE.BoxGeometry(.012,3.5,.018),new THREE.MeshBasicMaterial({color:0xd4d7df,transparent:true,opacity:.48}));
+      lightBar.position.set(side*2.64,.05,-1.77);scene.add(lightBar);
+      const foot = new THREE.Mesh(new THREE.BoxGeometry(.34,.025,.28),frameDark);
+      foot.position.set(side*2.68,-2.47,-1.82);scene.add(foot);
+    }
+    // Reflective circular exhibition dais with fine concentric inlays.
+    const dais = new THREE.Mesh(new THREE.CylinderGeometry(1.38,1.48,.075,96),new THREE.MeshBasicMaterial({color:0x17191e,visible:false}));
+    dais.position.set(0,-2.48,-.05);dais.receiveShadow=true;dais.castShadow=true;scene.add(dais);
+    for(const radius of [1.18,1.34]){
+      const inlay=new THREE.Mesh(new THREE.TorusGeometry(radius,.008,8,128),new THREE.MeshBasicMaterial({color:0x858993,visible:false}));
+      inlay.rotation.x=Math.PI/2;inlay.position.y=-2.435;scene.add(inlay);
+    }
+    // Suspended tailoring rings add depth without distracting from the garment.
+    for(const [x,y,z,radius,opacity] of [[-2.05,1.65,-1.1,.22,.45],[2.02,.95,-1.15,.13,.32]]){
+      const ring=new THREE.Mesh(new THREE.TorusGeometry(radius,.009,8,48),new THREE.MeshBasicMaterial({color:0xb9bdc5,visible:false}));
+      ring.position.set(x,y,z);ring.rotation.y=.35;scene.add(ring);
+    }
+
     const resize=()=>{
       const w=Math.max(host.clientWidth,1),h=Math.max(host.clientHeight,1);
       renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();
