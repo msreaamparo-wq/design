@@ -1,8 +1,17 @@
-const hosts = [...document.querySelectorAll("#dressform, #loginDressform, [data-dressform-preview]")];
-
-for (const host of hosts) bootDressform(host);
+function mountDressforms(root = document) {
+  const hosts = [];
+  if (root instanceof Element && root.matches("#dressform, #loginDressform, #workspaceDressform, #designDressform, [data-dressform-preview]")) hosts.push(root);
+  if (root.querySelectorAll) hosts.push(...root.querySelectorAll("#dressform, #loginDressform, #workspaceDressform, #designDressform, [data-dressform-preview]"));
+  hosts.forEach(host => { if (!host.dataset.dressformReady) bootDressform(host); });
+}
+mountDressforms();
+const mountObserver = new MutationObserver(records => records.forEach(record => record.addedNodes.forEach(node => {
+  if (node.nodeType === 1) mountDressforms(node);
+})));
+mountObserver.observe(document.documentElement, { childList: true, subtree: true });
 
 async function bootDressform(host) {
+  host.dataset.dressformReady = "true";
   const fallback = () => {
     host.innerHTML = '<div class="three-fallback" role="status"><span>THREADS / ATELIER</span><b>FORM STUDY 01</b><small>Interactive 3D is unavailable here. Your styling workspace remains available.</small></div>';
   };
