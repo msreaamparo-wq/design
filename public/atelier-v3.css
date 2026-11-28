@@ -195,3 +195,25 @@ footer .wordmark small,footer>p,footer>small,.footer-links a{color:#aaa49c!impor
  .user-area{gap:7px}.user-area #userLabel{display:none}
 }
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+
+/* Interactive dress-form controls */
+.dressform-controls{position:absolute;z-index:8;left:18px;right:18px;bottom:58px;display:flex;align-items:center;justify-content:space-between;gap:12px;pointer-events:none}
+.dressform-controls button{pointer-events:auto;min-width:34px;min-height:34px;padding:7px 10px;border:1px solid #8e8b86;background:#171719;color:#f3f0e9;font:600 10px var(--ui);cursor:pointer;transition:background .18s,border-color .18s,color .18s}
+.dressform-controls button:hover,.dressform-controls button:focus-visible{background:#dcd6e2;color:#171719;border-color:#b5a9c2;outline:2px solid #b5a9c2;outline-offset:2px}
+.finish-switch,.view-switch{display:flex;align-items:center;gap:5px}
+.finish-switch>span{font:700 7px var(--ui);letter-spacing:1.4px;color:#e2ddd5;margin-right:4px}
+.finish-switch button[aria-pressed=true]{background:#e9e5de;color:#171719;border-color:#e9e5de}
+.view-switch button{min-width:32px;padding-inline:8px}
+#dressform canvas{outline:none}
+#dressform canvas:focus-visible{outline:2px solid #b8a9c7;outline-offset:-4px}
+.three-fallback{height:100%;min-height:260px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:28px;text-align:center;background:#171719;color:#eee9e1}
+.three-fallback span{font:700 8px var(--ui);letter-spacing:2px;color:#c5b9cc}
+.three-fallback b{font:400 clamp(28px,4vw,48px) var(--display)}
+.three-fallback small{max-width:260px;font:10px/1.7 var(--ui);color:#bcb6ae}
+button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid #8f7a9f!important;outline-offset:3px!important}
+@media(max-width:650px){
+ .dressform-controls{left:9px;right:9px;bottom:45px;align-items:flex-end;flex-wrap:wrap}
+ .finish-switch{gap:3px}.finish-switch>span{font-size:6px}
+ .dressform-controls button{min-width:30px;min-height:32px;padding:6px 7px;font-size:9px}
+ .view-switch{margin-left:auto}
+}
