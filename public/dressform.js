@@ -21,8 +21,8 @@ async function bootDressform(host) {
     if (!("WebGLRenderingContext" in window)) throw new Error("WebGL is unavailable");
 
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color("#111114");
-    scene.fog = new THREE.Fog("#111114", 8, 18);
+    scene.background = new THREE.Color("#512a34");
+    scene.fog = new THREE.Fog("#512a34", 8, 18);
 
     const camera = new THREE.PerspectiveCamera(32, 1, .1, 60);
     const targetPoint = new THREE.Vector3(0, -.35, 0);
@@ -46,30 +46,30 @@ async function bootDressform(host) {
     canvas.setAttribute("aria-label", "Interactive 3D couture mannequin. Drag to rotate, pinch or Control plus wheel to zoom. Use arrow keys, plus, minus and zero.");
     canvas.style.touchAction = "pan-y";
 
-    scene.add(new THREE.HemisphereLight(0xe2e4e9, 0x17171b, 1.55));
-    const key = new THREE.DirectionalLight(0xfff8f0, 3.1);
+    scene.add(new THREE.HemisphereLight(0xffe9e4, 0x3b2028, 1.65));
+    const key = new THREE.DirectionalLight(0xfff0e8, 3.25);
     key.position.set(3.5, 6, 5);
     key.castShadow = true;
     key.shadow.mapSize.set(mobile ? 512 : 1024, mobile ? 512 : 1024);
     key.shadow.camera.left = -4; key.shadow.camera.right = 4;
     key.shadow.camera.top = 5; key.shadow.camera.bottom = -5;
     scene.add(key);
-    const rim = new THREE.DirectionalLight(0xb8c1d1, 3.8);
+    const rim = new THREE.DirectionalLight(0xe6aeb8, 3.1);
     rim.position.set(-4, 3, -4); scene.add(rim);
-    const fill = new THREE.PointLight(0xffffff, 1.15, 12);
+    const fill = new THREE.PointLight(0xffd8d1, 1.25, 12);
     fill.position.set(2, 1, 5); scene.add(fill);
-    const top = new THREE.SpotLight(0xffffff, 75, 16, Math.PI / 5, .65, 1.4);
+    const top = new THREE.SpotLight(0xffeee8, 72, 16, Math.PI / 5, .65, 1.4);
     top.position.set(0, 6, 1); top.castShadow = !mobile; scene.add(top);
 
     const stage = new THREE.Group();
     scene.add(stage);
     const mannequin = new THREE.Group();
     stage.add(mannequin);
-    const bodyMat = new THREE.MeshPhysicalMaterial({ color: 0x24252a, roughness: .34, metalness: .22, clearcoat: .42 });
-    const metal = new THREE.MeshStandardMaterial({ color: 0x666970, metalness: .84, roughness: .24 });
+    const bodyMat = new THREE.MeshPhysicalMaterial({ color: 0xd9c8bd, roughness: .48, metalness: .04, clearcoat: .22 });
+    const metal = new THREE.MeshStandardMaterial({ color: 0x9a6b64, metalness: .72, roughness: .3 });
     const garment = new THREE.MeshPhysicalMaterial({
-      color: 0xb9bbc0, roughness: .23, metalness: .18, clearcoat: .78,
-      clearcoatRoughness: .18, sheen: 1, sheenColor: new THREE.Color(0xe4e5e8),
+      color: 0x873f50, roughness: .3, metalness: .08, clearcoat: .72,
+      clearcoatRoughness: .22, sheen: 1, sheenColor: new THREE.Color(0xe9b9bd),
       side: THREE.DoubleSide
     });
     const garmentMeshes = [];
@@ -166,14 +166,14 @@ async function bootDressform(host) {
     const pole = new THREE.Mesh(new THREE.CylinderGeometry(.025,.035,1.05,32),metal);
     pole.position.y=-1.82; mannequin.add(pole);
     const base = new THREE.Mesh(new THREE.CylinderGeometry(.58,.68,.14,80),
-      new THREE.MeshStandardMaterial({color:0x17181c,metalness:.8,roughness:.24}));
+      new THREE.MeshStandardMaterial({color:0x492630,metalness:.68,roughness:.3}));
     base.position.y=-2.43; base.castShadow=true; mannequin.add(base);
 
     const floor = new THREE.Mesh(new THREE.CircleGeometry(7,96),
-      new THREE.MeshStandardMaterial({color:0x17181b,roughness:.25,metalness:.32}));
+      new THREE.MeshStandardMaterial({color:0x603b42,roughness:.38,metalness:.16}));
     floor.rotation.x=-Math.PI/2; floor.position.y=-2.52; floor.receiveShadow=true; scene.add(floor);
 
-    const frameMaterial = new THREE.MeshStandardMaterial({color:0x777b83,metalness:.88,roughness:.2});
+    const frameMaterial = new THREE.MeshStandardMaterial({color:0xb1847e,metalness:.7,roughness:.28});
     const frame = new THREE.Group();
     const rail = new THREE.Mesh(new THREE.BoxGeometry(.035,5.3,.035),frameMaterial);
     rail.position.set(-2.05,.1,-.9); frame.add(rail);
@@ -183,13 +183,13 @@ async function bootDressform(host) {
 
     const controls = document.createElement("div");
     controls.className = "dressform-controls";
-    controls.innerHTML = '<div class="finish-switch" role="group" aria-label="Garment finish"><span>FINISH</span><button type="button" data-finish="silver" aria-pressed="true">Silver</button><button type="button" data-finish="ivory" aria-pressed="false">Ivory</button><button type="button" data-finish="charcoal" aria-pressed="false">Charcoal</button></div><div class="view-switch" role="group" aria-label="Mannequin view controls"><button type="button" data-view="left" aria-label="Rotate left">←</button><button type="button" data-view="right" aria-label="Rotate right">→</button><button type="button" data-view="in" aria-label="Zoom in">+</button><button type="button" data-view="out" aria-label="Zoom out">−</button><button type="button" data-view="reset" aria-label="Reset view">0</button></div>';
+    controls.innerHTML = '<div class="finish-switch" role="group" aria-label="Garment finish"><span>FABRIC</span><button type="button" data-finish="oxblood" aria-pressed="true">Oxblood</button><button type="button" data-finish="ivory" aria-pressed="false">Ivory</button><button type="button" data-finish="rose" aria-pressed="false">Dusty rose</button></div><div class="view-switch" role="group" aria-label="Mannequin view controls"><button type="button" data-view="left" aria-label="Rotate left">←</button><button type="button" data-view="right" aria-label="Rotate right">→</button><button type="button" data-view="in" aria-label="Zoom in">+</button><button type="button" data-view="out" aria-label="Zoom out">−</button><button type="button" data-view="reset" aria-label="Reset view">0</button></div>';
     host.parentElement?.append(controls);
 
     const finishes = {
-      silver: { color: 0xb9bbc0, sheen: 0xe4e5e8, metalness: .18 },
-      ivory: { color: 0xe4ddcf, sheen: 0xfff8e9, metalness: .08 },
-      charcoal: { color: 0x34343a, sheen: 0x9995a0, metalness: .3 }
+      oxblood: { color: 0x873f50, sheen: 0xe9b9bd, metalness: .08 },
+      ivory: { color: 0xe9ded3, sheen: 0xfff5e9, metalness: .04 },
+      rose: { color: 0xc18e98, sheen: 0xf2d5d5, metalness: .03 }
     };
     controls.querySelectorAll("[data-finish]").forEach(button => button.addEventListener("click", () => {
       const finish = finishes[button.dataset.finish];
