@@ -223,7 +223,7 @@ button:focus-visible,a:focus-visible,input:focus-visible,select:focus-visible,te
 .workspace-dressform{position:relative;width:100%;height:350px;min-height:300px;margin:10px 0;background:#111114;overflow:hidden}
 .workspace-dressform canvas{display:block;width:100%;height:100%;outline:none}
 .atelier-preview>.muted{color:#c4beb6!important;margin:8px 0 0}
-.workspace-dressform .dressform-controls{bottom:10px;left:10px;right:10px}
+.atelier-preview .dressform-controls{bottom:58px;left:10px;right:10px}
 @media(max-width:650px){.workspace-dressform{height:290px;min-height:260px}.atelier-preview{padding:12px}}
 
 /* Offline editorial image treatments */
